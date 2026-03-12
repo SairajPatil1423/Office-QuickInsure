@@ -1,13 +1,38 @@
 INTEREST = 0.10
 PERIOD = 12.0
 
-$customers = {}
-$accounts = {}
-$transactions = {}
-$loans = {}
+$customers = {
+  1 => {name: "sairaj", email: "sai@mail.com", phone: "9876543210", address: "Karad"},
+  2 => {name: "Amit",  email: "amit@mail.com",  phone: "9123456789", address: "Pune"},
+  3 => {name: "Sidharth",  email: "sid@mail.com",  phone: "9988776655", address: "Mumbai"}
+}
 
-txn_counter = 1
-loan_counter = 1
+$accounts = {
+  1 => {balance: 15000, loan_amount: 50000},
+  2 => {balance: 22000, loan_amount: 0},
+  3 => {balance: 8000,  loan_amount: 20000}
+}
+
+$transactions = {
+  1 => [
+    {txn_id: 1, type: :deposit, amount: 15000, time: Time.now, details: {}},
+    {txn_id: 4, type: :deposit, amount: 15000, time: Time.now, details: {}}
+  ],
+  2 => [
+    {txn_id: 2, type: :deposit, amount: 22000, time: Time.now, details: {}}
+  ],
+  3 => [
+    {txn_id: 3, type: :deposit, amount: 8000, time: Time.now, details: {}}
+  ]
+}
+
+$loans = {
+  1 => {customer_id: 1, loan_amount: 50000, status: :approved, emi: 4583.33},
+  2 => {customer_id: 3, loan_amount: 20000, status: :approved, emi: 1833.33}
+}
+
+txn_counter = 4
+loan_counter = 3
 
 def validate_customer(customer_id)
   raise "Customer not found" unless $customers[customer_id]
@@ -174,7 +199,20 @@ def approve_loan(customer_id, loan_counter, emi_calc)
   puts "Loan approved"
   puts "EMI = #{emi}"
 end
+def display_loans(customer_id)
+  validate_customer(customer_id)
 
+  loans = $loans.select { |loan_id, loan| loan[:customer_id] == customer_id }
+
+  if loans.empty?
+    puts "No loans found"
+    return
+  end
+
+  loans.each do |loan_id, loan|
+    puts "Loan ID: #{loan_id} | Amount: #{loan[:loan_amount]} | EMI: #{loan[:emi]} | Status: #{loan[:status]}"
+  end
+end
 def display_transactions(customer_id)
   validate_customer(customer_id)
 
@@ -202,8 +240,38 @@ def display_customer(customer_id)
   puts "Loan: #{account[:loan_amount]}"
 end
 
+
+
+# Queries  ->cust with max transaction by amount
+def maximum_transaction
+  totals = {}
+
+  raise "No transactions found" if $transactions.empty?
+
+  $transactions.each do |customer_id, txns|
+    sum = 0
+
+    txns.each do |t|
+      sum += t[:amount]
+    end
+
+    totals[customer_id] = sum
+  end
+
+  max_customer = nil
+  max_amount = 0
+
+  totals.each do |customer_id, total|
+    if total > max_amount
+      max_amount = total
+      max_customer = customer_id
+    end
+  end
+
+  puts "Customer ID: #{max_customer} | Transaction Amount: #{max_amount}"
+end
+
 while true
-  puts "\n------ BANK MENU ------"
   puts "1 Create Customer"
   puts "2 Deposit"
   puts "3 Withdraw"
@@ -212,15 +280,17 @@ while true
   puts "6 Balance"
   puts "7 Transactions"
   puts "8 Customer Details"
-  puts "9 Exit"
+  puts "9 Show Loans"
+  puts "10 max transaction User"
+  puts "11 Exit"
 
   choice = gets.chomp.to_i
-  break if choice == 9
+  break if choice == 11
 
   attempts = 0
 
   begin
-    if choice != 1
+    if choice != 1 && choice!=10
       puts "Customer ID:"
       id = gets.chomp.to_i
     end
@@ -253,7 +323,10 @@ while true
 
     when 8
       display_customer(id)
-
+    when 9
+      display_loans(id)
+    when 10
+      maximum_transaction()
     else
       puts "Invalid choice"
     end
