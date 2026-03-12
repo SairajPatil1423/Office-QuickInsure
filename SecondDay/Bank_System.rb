@@ -199,6 +199,7 @@ def approve_loan(customer_id, loan_counter, emi_calc)
   puts "Loan approved"
   puts "EMI = #{emi}"
 end
+
 def display_loans(customer_id)
   validate_customer(customer_id)
 
@@ -213,6 +214,7 @@ def display_loans(customer_id)
     puts "Loan ID: #{loan_id} | Amount: #{loan[:loan_amount]} | EMI: #{loan[:emi]} | Status: #{loan[:status]}"
   end
 end
+
 def display_transactions(customer_id)
   validate_customer(customer_id)
 
@@ -240,28 +242,16 @@ def display_customer(customer_id)
   puts "Loan: #{account[:loan_amount]}"
 end
 
-
-
 # Queries  ->cust with max transaction by amount
 def maximum_transaction
-  totals = {}
-
   raise "No transactions found" if $transactions.empty?
-
-  $transactions.each do |customer_id, txns|
-    sum = 0
-
-    txns.each do |t|
-      sum += t[:amount]
-    end
-
-    totals[customer_id] = sum
-  end
 
   max_customer = nil
   max_amount = 0
 
-  totals.each do |customer_id, total|
+  $transactions.each do |customer_id, txns|
+    total = txns.sum { |t| t[:amount] }
+
     if total > max_amount
       max_amount = total
       max_customer = customer_id
@@ -269,6 +259,42 @@ def maximum_transaction
   end
 
   puts "Customer ID: #{max_customer} | Transaction Amount: #{max_amount}"
+end
+
+# customer who has balance<loan he withdrawn amount
+def fraud_customer
+  raise "No loans found" if $loans.empty?
+
+  $loans.values
+        .group_by { |l| l[:customer_id] }
+        .each do |customer_id, loans|
+
+    total_loan = loans.sum { |l| l[:loan_amount] }
+    balance = $accounts[customer_id][:balance]
+
+    if balance < total_loan
+      puts "Fraud Risk Customer ID: #{customer_id} | Balance: #{balance} | Total Loan: #{total_loan}"
+    end
+  end
+end
+
+#transaction between two users list 1->2 && 2->1 then only show
+def mutual_transactions
+  transfers = []
+
+  $transactions.each do |customer_id, txns|
+    txns.each do |t|
+      if t[:type] == :transfer_sent
+        transfers << [customer_id, t[:details][:to]]
+      end
+    end
+  end
+
+  transfers.each do |a,b|
+    if transfers.include?([b,a])
+      puts "Customers #{a} and #{b} transacted with each other"
+    end
+  end
 end
 
 while true
