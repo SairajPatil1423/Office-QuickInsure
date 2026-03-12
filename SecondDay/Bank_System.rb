@@ -32,7 +32,7 @@ emi_calc = ->(loan) do
   (total / PERIOD).round(2)
 end
 
-def add_transaction(id,type,amount,counter,extra={})
+def add_transaction(id,type,amount,counter,extra={},time=Time.now)
 
   $transactions[id] ||= []
 
@@ -40,7 +40,7 @@ def add_transaction(id,type,amount,counter,extra={})
     txn_id: counter,
     type: type,
     amount: amount,
-    time: Time.now,
+    time:time,
     details: extra
   }
 
@@ -132,36 +132,11 @@ def transfer(id,counter)
 
   $accounts[id][:balance] -= amt
   $accounts[to][:balance] += amt
-
-  add_transaction(id,"Transfer Sent",amt,counter,{to:to})
-  add_transaction(to,"Transfer Received",amt,counter,{from:id})
+  time=Time.now
+  add_transaction(id,"Transfer Sent",amt,counter,{to:to},time)
+  add_transaction(to,"Transfer Received",amt,counter,{from:id},time)
 
   puts "Transfer successful"
-
-end
-
-def loan(id,loan_counter,emi_calc)
-
-  validate_customer(id)
-
-  puts "Loan Amount:"
-  amt = gets.chomp.to_i
-  validate_amount(amt)
-
-  emi = emi_calc.call(amt)
-
-  $accounts[id][:loan_amount] += amt
-  $accounts[id][:balance] += amt
-
-  $loans[loan_counter] = {
-    customer_id:id,
-    loan_amount:amt,
-    status:"approved",
-    emi:emi
-  }
-
-  puts "Loan approved"
-  puts "EMI = #{emi}"
 
 end
 
