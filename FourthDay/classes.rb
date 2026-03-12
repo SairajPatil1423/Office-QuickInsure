@@ -45,18 +45,18 @@
 # Counter.show
 
 # public / private methods
-# class Test
-#   def show
-#     puts "public method"
-#   end
+class Test
+  def show
+    puts "public method"
+  end
 
-#   private
+  private
 
-#   def secret
-#     puts "private method"
-#   end
-# end
-# t=Test.new
-# t.show
-# t.secret
+  def secret
+    puts "private method"
+  end
+end
+t=Test.new
+t.show
+t.secret
 
