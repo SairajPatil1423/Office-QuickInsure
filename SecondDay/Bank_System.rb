@@ -278,23 +278,25 @@ def fraud_customer
   end
 end
 
-#transaction between two users list 1->2 && 2->1 then only show
-def mutual_transactions
-  transfers = []
+#transaction between two users
+def transactions_between(id1, id2)
+  found = false
 
-  $transactions.each do |customer_id, txns|
+  [$transactions[id1], $transactions[id2]].each do |txns|
     txns.each do |t|
       if t[:type] == :transfer_sent
-        transfers << [customer_id, t[:details][:to]]
+        from = t[:details][:from] 
+        to = t[:details][:to]
+
+        if (from == id1 && to == id2) || (from == id2 && to == id1)
+          puts "From #{from} → To #{to} | Amount: #{t[:amount]} | Time: #{t[:time]}"
+          found = true
+        end
       end
     end
   end
 
-  transfers.each do |a,b|
-    if transfers.include?([b,a])
-      puts "Customers #{a} and #{b} transacted with each other"
-    end
-  end
+  puts "No transactions between #{id1} and #{id2}" unless found
 end
 
 while true
