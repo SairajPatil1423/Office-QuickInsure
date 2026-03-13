@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # class Robots
 #   def walk
 #     puts "walking"
@@ -31,9 +33,9 @@ def find_by_attribute(users, attribute, value)
 end
 
 users = [
-  User.new("alice", "alice@123", :admin),
-  User.new("bob", "bob@123", :user),
-  User.new("charlie", "char@123", :admin)
+  User.new('alice', 'alice@123', :admin),
+  User.new('bob', 'bob@123', :user),
+  User.new('charlie', 'char@123', :admin)
 ]
 
 admins = find_by_attribute(users, :role, :admin)

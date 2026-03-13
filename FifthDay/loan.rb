@@ -1,13 +1,12 @@
-class Loan
+# frozen_string_literal: true
 
+class Loan
   attr_accessor :remaining_balance, :status, :last_payment_date
   attr_reader :loan_id, :customer_id, :principal, :rate, :years, :start_date, :emi
 
   def initialize(loan_id, customer_id, amount, years, rate = 0.10)
-
     @loan_id = loan_id
     @customer_id = customer_id
-
     @principal = amount
     @rate = rate
     @years = years
@@ -24,7 +23,5 @@ class Loan
     @remaining_balance = total_payable
 
     @status = :active
-
   end
-
 end
