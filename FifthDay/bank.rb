@@ -398,6 +398,7 @@ class Bank
   Validator.customer_exists(@customers, id)
   loans = @loans.select { |_, loan| loan.customer_id == id && loan.status == :active }
   raise 'No active loans found' if loans.empty?
+
   loans.each do |loan_id, loan|
     months_before = (loan.remaining_balance / loan.emi.to_f).ceil
     new_balance = loan.remaining_balance - payment
@@ -413,6 +414,7 @@ class Bank
     puts "tenure reduced by: #{months_saved} months"
   end
   end
+  
   def projected_interest_next_year
   total_interest = 0
   active_loans = @loans.select { |_, loan| loan.status == :active }
