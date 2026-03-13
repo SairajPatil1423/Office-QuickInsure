@@ -385,10 +385,10 @@ class Bank
       account = @accounts[id]
 
       if account.loan_total > 5 * account.balance
-        puts "Customer ID: #{id}"
-        puts "Name: #{customer.name}"
-        puts "Total Loan: #{account.loan_total}"
-        puts "Balance: #{account.balance}"
+        puts "customer iD: #{id}"
+        puts "name: #{customer.name}"
+        puts "total loan: #{account.loan_total}"
+        puts "balance: #{account.balance}"
         
       end
     end
@@ -403,21 +403,21 @@ class Bank
     new_balance = loan.remaining_balance - payment
     months_after = (new_balance / loan.emi.to_f).ceil
     months_saved = months_before - months_after
-    puts "Loan ID: #{loan_id}"
-    puts "Remaining Balance: #{loan.remaining_balance}"
-    puts "EMI: #{loan.emi}"
-    puts "Months Remaining: #{months_before}"
-    puts "After paying #{payment} principal:"
-    puts "New Balance: #{new_balance}"
-    puts "New Months Remaining: #{months_after}"
-    puts "Tenure Reduced By: #{months_saved} months"
+    puts "loan id: #{loan_id}"
+    puts "remaining balance: #{loan.remaining_balance}"
+    puts "emi: #{loan.emi}"
+    puts "months remaining: #{months_before}"
+    puts "after paying #{payment} principal:"
+    puts "new balance: #{new_balance}"
+    puts "new months remaining: #{months_after}"
+    puts "tenure reduced by: #{months_saved} months"
   end
   end
   def projected_interest_next_year
   total_interest = 0
   active_loans = @loans.select { |_, loan| loan.status == :active }
   if active_loans.empty?
-    puts "No active loans"
+    puts "no active loans"
     return
   end
   active_loans.each do |loan_id, loan|
