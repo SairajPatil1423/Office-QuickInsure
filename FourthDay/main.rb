@@ -20,16 +20,20 @@ while true
   puts "3 Withdraw"
   puts "4 Transfer"
   puts "5 Take Loan"
-  puts "6 Show Customer Details"
-  puts "7 Show Transactions"
-  puts "8 Show Loans"
-  puts "9 Max Transaction Customer"
-  puts "10 Fraud Customers"
-  puts "11 Transactions Between Two Customers"
-  puts "12 Exit"
+  puts "6 Repay Loan"
+  puts "7 Show Customer Details"
+  puts "8 Show Transactions"
+  puts "9 Show Loans"
+  puts "10 Max Transaction Customer"
+  puts "11 Fraud Customers"
+  puts "12 Transactions Between Two Customers"
+  puts "13 Exit"
+
   attempts = 0
   choice = ask_i("Enter choice")
+
   begin
+
     case choice
 
     when 1
@@ -37,7 +41,8 @@ while true
         ask("Name"),
         ask("Email"),
         ask("Phone"),
-        ask("Address")
+        ask("Address"),
+        ask("Password")
       )
 
     when 2
@@ -62,37 +67,44 @@ while true
     when 5
       bank.approve_loan(
         ask_i("Customer ID"),
-        ask_i("Loan Amount")
+        ask_i("Loan Amount"),
+        ask_i("Loan Years")
       )
 
     when 6
+      bank.repay_loan(
+        ask_i("Customer ID"),
+        ask_i("Repay Amount")
+      )
+
+    when 7
       bank.show_customer(
         ask_i("Customer ID")
       )
 
-    when 7
+    when 8
       bank.show_transactions(
         ask_i("Customer ID")
       )
 
-    when 8
+    when 9
       bank.show_loans(
         ask_i("Customer ID")
       )
 
-    when 9
+    when 10
       bank.maximum_transaction
 
-    when 10
+    when 11
       bank.fraud_customer
 
-    when 11
+    when 12
       bank.transactions_between(
         ask_i("Customer 1 ID"),
         ask_i("Customer 2 ID")
       )
 
-    when 12
+    when 13
       break
 
     else
@@ -105,4 +117,5 @@ while true
     puts e.message
     retry if attempts < 3
   end
+
 end

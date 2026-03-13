@@ -1,7 +1,6 @@
 module BankSystem
 
 INTEREST = 0.10
-PERIOD = 12.0
 
 
 class Validator
@@ -44,6 +43,8 @@ class Validator
 
 end
 
+
+
 class Customer
 
   attr_reader :id, :name, :email, :phone, :address
@@ -59,46 +60,63 @@ class Customer
 end
 
 
+
 class Account
 
-  attr_accessor :balance, :loan_amount
+  attr_accessor :balance, :loan_amount, :password
 
   def initialize
-    @balance=0
-    @loan_amount=0
+    @balance = 0
+    @loan_amount = 0
+    @password = nil
   end
 
 end
+
 
 
 class Transaction
 
   attr_reader :txn_id,:type,:amount,:time,:details
 
-  def initialize(txn_id,type,amount,details={})
+  def initialize(txn_id,type,amount,details={},time=nil)
     @txn_id=txn_id
     @type=type
     @amount=amount
-    @time=Time.now
     @details=details
+    @time=time || Time.now
   end
 
 end
+
 
 
 class Loan
 
-  attr_reader :customer_id,:loan_amount,:emi,:status
+  attr_reader :customer_id,:loan_amount,:emi,:years,:due_date
+  attr_accessor :remaining,:status
 
-  def initialize(customer_id,amount)
-    @customer_id=customer_id
-    @loan_amount=amount
-    @status=:approved
-    total=amount+(amount*INTEREST)
-    @emi=(total/PERIOD).round(2)
+  def initialize(customer_id,amount,years)
+
+    @customer_id = customer_id
+    @loan_amount = amount
+    @years = years
+    @status = :approved
+
+    months = years * 12
+    interest = amount * INTEREST * years
+    total = amount + interest
+
+    @emi = (total / months).round(2)
+
+    @remaining = total
+
+    @due_date = Time.now + (years * 365 * 24 * 60 * 60)
+
   end
 
 end
+
 
 
 class Bank
@@ -116,215 +134,309 @@ class Bank
   end
 
 
-def create_customer(name,email,phone,address)
 
-  Validator.name(name)
-  Validator.email(email)
-  Validator.phone(phone)
-  Validator.address(address)
+  def authenticate(id)
 
-  Validator.duplicate_email(@customers,email)
-  Validator.duplicate_phone(@customers,phone)
+    account=@accounts[id]
 
-  id=@customers.empty? ? 1 : @customers.keys.max+1
-
-  @customers[id]=Customer.new(id,name,email,phone,address)
-  @accounts[id]=Account.new
-
-  puts "Customer created. ID=#{id}"
-
-end
-
-
-def record_transaction(id,type,amount,extra={})
-
-  txn=Transaction.new(@txn_counter,type,amount,extra)
-  @transactions[id] << txn
-  @txn_counter+=1
-
-end
-
-
-def deposit(id,amount)
-
-  Validator.customer_exists(@customers,id)
-  Validator.amount(amount)
-
-  @accounts[id].balance+=amount
-
-  record_transaction(id,:deposit,amount)
-
-  puts "Deposit successful"
-  puts "Balance=#{@accounts[id].balance}"
-
-end
-
-
-def withdraw(id,amount)
-
-  Validator.customer_exists(@customers,id)
-  Validator.amount(amount)
-
-  raise "Insufficient balance" if @accounts[id].balance<amount
-
-  @accounts[id].balance-=amount
-
-  record_transaction(id,:withdraw,amount)
-
-  puts "Withdraw successful"
-
-end
-
-
-def transfer(from,to,amount)
-
-  Validator.customer_exists(@customers,from)
-  Validator.customer_exists(@customers,to)
-  Validator.amount(amount)
-
-  raise "Insufficient balance" if @accounts[from].balance<amount
-
-  @accounts[from].balance-=amount
-  @accounts[to].balance+=amount
-
-  record_transaction(from,:transfer_sent,amount,{to:to})
-  record_transaction(to,:transfer_received,amount,{from:from})
-
-  puts "Transfer successful"
-
-end
-
-
-def approve_loan(id,amount)
-
-  Validator.customer_exists(@customers,id)
-  Validator.amount(amount)
-
-  loan=Loan.new(id,amount)
-
-  @accounts[id].loan_amount+=amount
-  @accounts[id].balance+=amount
-
-  @loans[@loan_counter]=loan
-
-  puts "Loan approved"
-  puts "EMI=#{loan.emi}"
-
-  @loan_counter+=1
-
-end
-
-
-def show_customer(id)
-
-  Validator.customer_exists(@customers,id)
-
-  c=@customers[id]
-  a=@accounts[id]
-
-  puts "Name: #{c.name}"
-  puts "Email: #{c.email}"
-  puts "Phone: #{c.phone}"
-  puts "Address: #{c.address}"
-  puts "Balance: #{a.balance}"
-  puts "Loan: #{a.loan_amount}"
-
-end
-
-
-def show_transactions(id)
-
-  Validator.customer_exists(@customers,id)
-
-  if @transactions[id].empty?
-    puts "No transactions"
-    return
-  end
-
-  @transactions[id].each do |t|
-    puts "#{t.txn_id} | #{t.type} | #{t.amount} | #{t.time}"
-  end
-
-end
-
-
-def show_loans(id)
-
-  Validator.customer_exists(@customers,id)
-
-  loans=@loans.select{|k,v| v.customer_id==id}
-
-  if loans.empty?
-    puts "No loans"
-    return
-  end
-
-  loans.each do |lid,l|
-    puts "Loan ID #{lid} | Amount #{l.loan_amount} | EMI #{l.emi}"
-  end
-
-end
-
-
-def maximum_transaction
-
-  raise "No transactions" if @transactions.empty?
-
-  max_customer=nil
-  max_amount=0
-
-  @transactions.each do |id,txns|
-
-    total=txns.sum{|t| t.amount}
-
-    if total>max_amount
-      max_amount=total
-      max_customer=id
+    if account.password.nil?
+      print "Set new password: "
+      account.password = gets.chomp
+      puts "Password created"
     end
 
+    print "Enter password: "
+    pass = gets.chomp
+
+    raise "Authentication failed" unless pass == account.password
+
   end
 
-  puts "Customer ID #{max_customer} | Transaction Amount #{max_amount}"
 
-end
+  def ensure_balance(id,amount)
+    raise "Insufficient balance" if @accounts[id].balance < amount
+  end
 
 
-def fraud_customer
+  def add_balance(id,amount)
+    @accounts[id].balance += amount
+  end
 
-  raise "No loans found" if @loans.empty?
 
-  @loans.values
-  .group_by{|l| l.customer_id}
-  .each do |id,loans|
+  def deduct_balance(id,amount)
+    ensure_balance(id,amount)
+    @accounts[id].balance -= amount
+  end
 
-    total=loans.sum{|l| l.loan_amount}
-    balance=@accounts[id].balance
 
-    if balance<total
-      puts "Fraud Risk Customer #{id} | Balance #{balance} | Loan #{total}"
+  def record_transaction(id,type,amount,extra={},time=nil)
+
+    txn = Transaction.new(@txn_counter,type,amount,extra,time)
+
+    @transactions[id] << txn
+
+    @txn_counter += 1
+
+  end
+
+
+
+
+  def create_customer(name,email,phone,address)
+
+    Validator.name(name)
+    Validator.email(email)
+    Validator.phone(phone)
+    Validator.address(address)
+
+    Validator.duplicate_email(@customers,email)
+    Validator.duplicate_phone(@customers,phone)
+
+    id=@customers.empty? ? 1 : @customers.keys.max+1
+
+    @customers[id] = Customer.new(id,name,email,phone,address)
+    @accounts[id] = Account.new
+
+    puts "Customer created. ID=#{id}"
+
+  end
+
+
+
+  def deposit(id,amount)
+
+    Validator.customer_exists(@customers,id)
+    Validator.amount(amount)
+
+    authenticate(id)
+
+    add_balance(id,amount)
+
+    record_transaction(id,:deposit,amount)
+
+    puts "Deposit successful"
+    puts "Balance=#{@accounts[id].balance}"
+
+  end
+
+
+
+  def withdraw(id,amount)
+
+    Validator.customer_exists(@customers,id)
+    Validator.amount(amount)
+
+    authenticate(id)
+
+    deduct_balance(id,amount)
+
+    record_transaction(id,:withdraw,amount)
+
+    puts "Withdraw successful"
+
+  end
+
+
+
+  def transfer(from,to,amount)
+
+    Validator.customer_exists(@customers,from)
+    Validator.customer_exists(@customers,to)
+    Validator.amount(amount)
+
+    authenticate(from)
+
+    deduct_balance(from,amount)
+    add_balance(to,amount)
+
+    time = Time.now
+
+    record_transaction(from,:transfer_sent,amount,{to:to},time)
+    record_transaction(to,:transfer_received,amount,{from:from},time)
+
+    puts "Transfer successful"
+
+  end
+
+
+
+  def approve_loan(id,amount,years)
+
+    Validator.customer_exists(@customers,id)
+    Validator.amount(amount)
+
+    authenticate(id)
+
+    loan = Loan.new(id,amount,years)
+
+    add_balance(id,amount)
+    @accounts[id].loan_amount += amount
+
+    @loans[@loan_counter] = loan
+
+    record_transaction(id,:loan_taken,amount)
+
+    puts "Loan approved"
+    puts "EMI=#{loan.emi}"
+    puts "Due date=#{loan.due_date}"
+
+    @loan_counter += 1
+
+  end
+
+
+
+  def repay_loan(id,amount)
+
+    Validator.customer_exists(@customers,id)
+    Validator.amount(amount)
+
+    authenticate(id)
+
+    loans = @loans.select{|k,v| v.customer_id==id}
+
+    raise "No loan found" if loans.empty?
+
+    loan_id,loan = loans.first
+
+    deduct_balance(id,amount)
+
+    loan.remaining -= amount
+
+    if loan.remaining <= 0
+      loan.remaining = 0
+      loan.status = :paid
+      puts "Loan fully repaid"
+    else
+      puts "Remaining loan #{loan.remaining}"
     end
 
+    record_transaction(id,:loan_repayment,amount)
+
   end
 
-end
 
-def transactions_between(id1,id2)
 
-  found=false
+  def show_customer(id)
 
-  [id1,id2].each do |id|
+    Validator.customer_exists(@customers,id)
+
+    authenticate(id)
+
+    c=@customers[id]
+    a=@accounts[id]
+
+    puts "Name: #{c.name}"
+    puts "Email: #{c.email}"
+    puts "Phone: #{c.phone}"
+    puts "Address: #{c.address}"
+    puts "Balance: #{a.balance}"
+    puts "Loan: #{a.loan_amount}"
+
+  end
+
+
+
+  def show_transactions(id)
+
+    Validator.customer_exists(@customers,id)
+
+    if @transactions[id].empty?
+      puts "No transactions"
+      return
+    end
 
     @transactions[id].each do |t|
+      puts "#{t.txn_id} | #{t.type} | #{t.amount} | #{t.time}"
+    end
 
-      if t.type==:transfer_sent
+  end
 
-        from=id
-        to=t.details[:to]
 
-        if (from==id1 && to==id2) || (from==id2 && to==id1)
 
-          puts "From #{from} -> To #{to} | Amount #{t.amount} | Time #{t.time}"
-          found=true
+  def show_loans(id)
+
+    Validator.customer_exists(@customers,id)
+
+    loans=@loans.select{|k,v| v.customer_id==id}
+
+    if loans.empty?
+      puts "No loans"
+      return
+    end
+
+    loans.each do |lid,l|
+      puts "Loan ID #{lid} | Amount #{l.loan_amount} | EMI #{l.emi} | Remaining #{l.remaining} | Due #{l.due_date}"
+    end
+
+  end
+
+
+
+  def maximum_transaction
+
+    raise "No transactions" if @transactions.empty?
+
+    max_customer=nil
+    max_amount=0
+
+    @transactions.each do |id,txns|
+
+      total=txns.sum{|t| t.amount}
+
+      if total>max_amount
+        max_amount=total
+        max_customer=id
+      end
+
+    end
+
+    puts "Customer ID #{max_customer} | Transaction Amount #{max_amount}"
+
+  end
+
+
+
+  def fraud_customer
+
+    raise "No loans found" if @loans.empty?
+
+    @loans.values
+    .group_by{|l| l.customer_id}
+    .each do |id,loans|
+
+      total=loans.sum{|l| l.loan_amount}
+      balance=@accounts[id].balance
+
+      if balance<total
+        puts "Fraud Risk Customer #{id} | Balance #{balance} | Loan #{total}"
+      end
+
+    end
+
+  end
+
+
+
+  def transactions_between(id1,id2)
+
+    found=false
+
+    [id1,id2].each do |id|
+
+      @transactions[id].each do |t|
+
+        if t.type==:transfer_sent
+
+          from=id
+          to=t.details[:to]
+
+          if (from==id1 && to==id2) || (from==id2 && to==id1)
+
+            puts "From #{from} -> To #{to} | Amount #{t.amount} | Time #{t.time}"
+            found=true
+
+          end
 
         end
 
@@ -332,11 +444,10 @@ def transactions_between(id1,id2)
 
     end
 
+    puts "No transactions between #{id1} and #{id2}" unless found
+
   end
 
-  puts "No transactions between #{id1} and #{id2}" unless found
-
 end
 
-end
 end
