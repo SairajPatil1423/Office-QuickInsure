@@ -5,6 +5,7 @@ require_relative 'customer'
 require_relative 'account'
 require_relative 'transaction'
 require_relative 'loan'
+
 class Bank
   ADMIN_PASSWORD = 'admin123'
 
@@ -13,7 +14,7 @@ class Bank
     @accounts = {}
     @transactions = Hash.new { |h, k| h[k] = [] }
     @loans = {}
-                                                                       
+
     @customer_counter = 1
     @loan_counter = 1
 
@@ -33,7 +34,6 @@ class Bank
       account.failed_attempts = 0
       true
     else
-
       account.failed_attempts += 1
 
       if account.failed_attempts >= 3
@@ -42,7 +42,6 @@ class Bank
       end
 
       raise 'Wrong password'
-
     end
   end
 
@@ -51,9 +50,7 @@ class Bank
   end
 
   def ensure_balance(id, amount)
-    return unless @accounts[id].balance < amount
-
-    raise 'Insufficient balance'
+    raise 'Insufficient balance' if @accounts[id].balance < amount
   end
 
   def deduct_balance(id, amount)
@@ -68,7 +65,6 @@ class Bank
     balance = @accounts[id].balance
 
     txn = Transaction.new(txn_id, type, amount, balance, details, time)
-
     @transactions[id] << txn
   end
 
@@ -79,14 +75,18 @@ class Bank
     Validator.address(address)
     Validator.duplicate_email(@customers, email)
     Validator.duplicate_phone(@customers, phone)
+
     raise 'Password must be at least 4 characters' if password.length < 4
 
     id = @customer_counter
     customer = Customer.new(id, name, email, phone, address)
     account = Account.new(password)
+
     @customers[id] = customer
     @accounts[id] = account
+
     @customer_counter += 1
+
     puts 'Customer created successfully'
     puts "Customer ID: #{id}"
   end
@@ -103,7 +103,6 @@ class Bank
     authenticate(id)
 
     add_balance(id, amount)
-
     record_transaction(id, :deposit, amount)
 
     puts 'Deposit successful'
@@ -122,7 +121,6 @@ class Bank
     authenticate(id)
 
     deduct_balance(id, amount)
-
     record_transaction(id, :withdraw, amount)
 
     puts 'Withdraw successful'
@@ -168,15 +166,12 @@ class Bank
     authenticate(id)
 
     loan_id = @loan_counter
-
     loan = Loan.new(loan_id, id, amount, years)
 
     @loans[loan_id] = loan
-
     @loan_counter += 1
 
     add_balance(id, amount)
-
     @accounts[id].loan_total += amount
 
     record_transaction(id, :loan_taken, amount)
@@ -199,34 +194,25 @@ class Bank
     authenticate(id)
 
     loans = @loans.select { |_, loan| loan.customer_id == id && loan.status == :active }
-
     raise 'No active loan found' if loans.empty?
 
     loan_id, loan = loans.first
 
-    @accounts[id]
-
     ensure_balance(id, amount)
 
     now = Time.now
-    days = ((now - loan.last_payment_date) / (60 * 60 * 24)).to_i
+    days = ((now - loan.last_payment_date) / (60 * 60 * 24)).to_f
 
     interest = (loan.remaining_balance * loan.rate * days / 365).round(2)
-
     total_due = loan.remaining_balance + interest
 
     payment = [amount, total_due].min
 
     deduct_balance(id, payment)
 
-    principal_payment = if payment >= interest
-                          payment - interest
-                        else
-                          0
-                        end
+    principal_payment = payment >= interest ? payment - interest : 0
 
     loan.remaining_balance -= principal_payment
-
     loan.last_payment_date = now
 
     if loan.remaining_balance <= 0
@@ -251,10 +237,8 @@ class Bank
     puts "Email: #{customer.email}"
     puts "Phone: #{customer.phone}"
     puts "Address: #{customer.address}"
-
     puts "Status: #{customer.status}"
     puts "Role: #{customer.role}"
-
     puts "Balance: #{account.balance}"
     puts "Loan Taken: #{account.loan_total}"
   end
@@ -276,158 +260,60 @@ class Bank
     end
   end
 
-  def admin_auth
-    print 'Enter admin password: '
-    pass = gets.chomp
+  #  Queries ->
 
-    raise 'Wrong admin password' unless pass == ADMIN_PASSWORD
-  end
-
-  def view_customers
-    if @customers.empty?
-      puts 'No customers found'
-      return
-    end
-
-    puts 'ID | Name | Status'
-
-    @customers.each do |id, customer|
-      puts "#{id} | #{customer.name} | #{customer.status}"
-    end
-  end
-
-  def show_locked_accounts
-    locked = @accounts.select { |_id, acc| acc.locked }
-
-    if locked.empty?
-      puts 'No locked accounts'
-      return
-    end
-
-    puts 'Locked Accounts:'
-
-    locked.each_key do |id|
-      puts "#{id} #{@customers[id].name}"
-    end
-  end
-
-  def unlock_account(id)
-    account = @accounts[id]
-
-    raise 'Account not found' unless account
-    raise 'Account not locked' unless account.locked
-
-    account.failed_attempts = 0
-    account.locked = false
-
-    puts 'Account unlocked'
-  end
-
-  def show_frozen_accounts
-    frozen = @customers.select { |_, c| c.status == :frozen }
-
-    if frozen.empty?
-      puts 'No frozen accounts'
-      return
-    end
-
-    puts 'Frozen Accounts:'
-
-    frozen.each do |id, c|
-      puts "#{id} #{c.name}"
-    end
-  end
-
-  def freeze_account(id)
-    Validator.customer_exists(@customers, id)
-
-    customer = @customers[id]
-
-    customer.status = :frozen
-
-    puts 'Account frozen'
-  end
-
-  def unfreeze_account(id)
-    Validator.customer_exists(@customers, id)
-
-    customer = @customers[id]
-
-    customer.status = :active
-
-    puts 'Account unfrozen'
-  end
-
-  def close_account(id)
-    Validator.customer_exists(@customers, id)
-
-    customer = @customers[id]
-
-    customer.status = :closed
-
-    puts 'Account closed'
-  end
-
-  def delete_customer(id)
-    Validator.customer_exists(@customers, id)
-
-    @customers.delete(id)
-    @accounts.delete(id)
-    @transactions.delete(id)
-
-    puts 'Customer deleted'
-  end
-
-
-  # Queries -->
   def risky_loans_total
     @customers.each do |id, customer|
       account = @accounts[id]
 
-      if account.loan_total > 5 * account.balance
-        puts "customer iD: #{id}"
-        puts "name: #{customer.name}"
-        puts "total loan: #{account.loan_total}"
-        puts "balance: #{account.balance}"
-        
-      end
+      next unless account.loan_total > 5 * account.balance
+
+      puts "Customer ID: #{id}"
+      puts "Name: #{customer.name}"
+      puts "Total Loan: #{account.loan_total}"
+      puts "Balance: #{account.balance}"
+
     end
   end
 
   def prepayment_impact(id, payment = 5000)
-  Validator.customer_exists(@customers, id)
-  loans = @loans.select { |_, loan| loan.customer_id == id && loan.status == :active }
-  raise 'No active loans found' if loans.empty?
+    Validator.customer_exists(@customers, id)
 
-  loans.each do |loan_id, loan|
-    months_before = (loan.remaining_balance / loan.emi.to_f).ceil
-    new_balance = loan.remaining_balance - payment
-    months_after = (new_balance / loan.emi.to_f).ceil
-    months_saved = months_before - months_after
-    puts "loan id: #{loan_id}"
-    puts "remaining balance: #{loan.remaining_balance}"
-    puts "emi: #{loan.emi}"
-    puts "months remaining: #{months_before}"
-    puts "after paying #{payment} principal:"
-    puts "new balance: #{new_balance}"
-    puts "new months remaining: #{months_after}"
-    puts "tenure reduced by: #{months_saved} months"
+    loans = @loans.select { |_, loan| loan.customer_id == id && loan.status == :active }
+    raise 'No active loans found' if loans.empty?
+
+    loans.each do |loan_id, loan|
+      months_before = (loan.remaining_balance / loan.emi.to_f).ceil
+
+      new_balance = [loan.remaining_balance - payment, 0].max
+      months_after = (new_balance / loan.emi.to_f).ceil
+
+      months_saved = months_before - months_after
+
+      puts "Loan ID: #{loan_id}"
+      puts "Remaining Balance: #{loan.remaining_balance}"
+      puts "EMI: #{loan.emi}"
+      puts "Months Remaining: #{months_before}"
+
+      puts "After paying #{payment} principal:"
+      puts "New Balance: #{new_balance}"
+      puts "New Months Remaining: #{months_after}"
+
+      puts "Tenure Reduced By: #{months_saved} months"
+
+    end
   end
-  end
-  
+
   def projected_interest_next_year
-  total_interest = 0
-  active_loans = @loans.select { |_, loan| loan.status == :active }
-  if active_loans.empty?
-    puts "no active loans"
-    return
-  end
-  active_loans.each do |loan_id, loan|
-    interest = loan.remaining_balance * loan.rate
-    total_interest += interest
-  end
-  puts
-  puts "Total projected interest for next 12 months: #{total_interest.round(2)}"
-end
+    total_interest = @loans.values
+                           .select { |loan| loan.status == :active }
+                           .sum { |loan| loan.remaining_balance * loan.rate }
 
+    if total_interest.zero?
+      puts 'No active loans'
+      return
+    end
+
+    puts "Total projected interest for next 12 months: #{total_interest.round(2)}"
+  end
 end
