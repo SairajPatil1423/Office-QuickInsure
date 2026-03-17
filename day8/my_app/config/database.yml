@@ -1,0 +1,28 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+
+development:
+  <<: *default
+  database: my_app_development
+  username: postgres
+  password: "Sai@1423"
+  host: localhost
+  port: 5432
+
+test:
+  <<: *default
+  database: my_app_test
+  username: postgres
+  password: "Sai@1423"
+  host: localhost
+  port: 5432
+
+production:
+  <<: *default
+  database: my_app_production
+  username: postgres
+  password: <%= ENV["MY_APP_DATABASE_PASSWORD"] %>
+  host: localhost
+  port: 5432
