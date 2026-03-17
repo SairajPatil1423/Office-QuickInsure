@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  specialization: MyString
+  phone: MyString
+  email: MyString
+  salary: 9.99
+  status: MyString
+  department: one
+
+two:
+  name: MyString
+  specialization: MyString
+  phone: MyString
+  email: MyString
+  salary: 9.99
+  status: MyString
+  department: two

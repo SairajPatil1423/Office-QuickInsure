@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  ward_name: MyString
+  ward_type: MyString
+  capacity: 1
+
+two:
+  ward_name: MyString
+  ward_type: MyString
+  capacity: 1

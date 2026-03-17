@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  patient: one
+  doctor: one
+  apt_date: 2026-03-17
+  apt_time: 2026-03-17 18:19:08
+  status: MyString
+
+two:
+  patient: two
+  doctor: two
+  apt_date: 2026-03-17
+  apt_time: 2026-03-17 18:19:08
+  status: MyString
