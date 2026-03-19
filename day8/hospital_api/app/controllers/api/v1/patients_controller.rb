@@ -6,7 +6,10 @@ class Api::V1::PatientsController < ApplicationController
   end
 
   def show
-    patient = Patient.find(params[:id])
+    patient = Patient.find_by(id: params[:id])
+
+    return render json: { error: "Patient not found" }, status: :not_found unless patient
+
     render json: patient
   end
 
@@ -22,7 +25,9 @@ class Api::V1::PatientsController < ApplicationController
 
  
   def update
-    patient = Patient.find(params[:id])
+    patient = Patient.find_by(id: params[:id])
+
+    return render json: { error: "Patient not found" }, status: :not_found unless patient
 
     if patient.update(patient_params)
       render json: patient
@@ -33,9 +38,11 @@ class Api::V1::PatientsController < ApplicationController
 
  
   def destroy
-    patient = Patient.find(params[:id])
-    patient.destroy
+    patient = Patient.find_by(id: params[:id])
 
+    return render json: { error: "Patient not found" }, status: :not_found unless patient
+
+    patient.destroy
     render json: { message: "Patient deleted successfully" }
   end
 

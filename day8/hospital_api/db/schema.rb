@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_18_112131) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_19_102546) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -34,17 +34,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_18_112131) do
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "duration", default: 30, null: false
     t.index ["doctor_id"], name: "index_appointments_on_doctor_id"
     t.index ["patient_id"], name: "index_appointments_on_patient_id"
   end
 
   create_table "beds", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "room_id", null: false
     t.string "bed_number"
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["room_id"], name: "index_beds_on_room_id"
+    t.uuid "ward_id"
+    t.index ["ward_id"], name: "index_beds_on_ward_id"
   end
 
   create_table "bills", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -145,7 +146,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_18_112131) do
   add_foreign_key "admissions", "patients"
   add_foreign_key "appointments", "doctors"
   add_foreign_key "appointments", "patients"
-  add_foreign_key "beds", "rooms"
+  add_foreign_key "beds", "wards"
   add_foreign_key "bills", "patients"
   add_foreign_key "departments", "doctors", column: "dept_head_id"
   add_foreign_key "doctors", "departments"
