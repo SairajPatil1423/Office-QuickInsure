@@ -1,0 +1,22 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+  username: postgres
+  password: Sai@1423
+  host: localhost
+  port: 5432
+
+development:
+  <<: *default
+  database: hospital_api_development
+
+test:
+  <<: *default
+  database: hospital_api_test
+
+production:
+  <<: *default
+  database: hospital_api_production
+  username: postgres
+  password: Sai@1423
