@@ -44,6 +44,20 @@ class Api::V1::AppointmentsController < ApplicationController
     render json: { message: "Appointment deleted" }
   end
 
+  def top_peak_hours
+    result = Appointment.top_3_peak_hours.map do |r|
+      start_hour = r.hour.to_i
+      end_hour = start_hour + 1
+
+      {
+        range: "#{format('%02d:00', start_hour)} - #{format('%02d:00', end_hour)}",
+        total_appointments: r.total_appointments
+      }
+    end
+
+    render json: result
+  end
+
   private
 
   def appointment_params

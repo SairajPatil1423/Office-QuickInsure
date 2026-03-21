@@ -39,4 +39,5 @@ class Admission < ApplicationRecord
 
     { success: "Discharged" }
   end
+  
 end

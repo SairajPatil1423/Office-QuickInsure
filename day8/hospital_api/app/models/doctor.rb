@@ -33,4 +33,27 @@ class Doctor < ApplicationRecord
 
     slots
   end
+
+
+ # queries
+  def self.performance
+    joins(:appointments)
+      .group("doctors.id")
+      .select(
+        "doctors.id, doctors.name,
+        COUNT(appointments.id) AS total_appointments,
+        SUM(doctors.consultation_fee) AS revenue"
+      )
+  end
+
+  def self.top_5
+    joins(:appointments)
+      .group("doctors.id")
+      .order("COUNT(appointments.id) DESC")
+      .limit(5)
+      .select("doctors.id, doctors.name, COUNT(appointments.id) AS total_appointments")
+  end
+
+  
+
 end

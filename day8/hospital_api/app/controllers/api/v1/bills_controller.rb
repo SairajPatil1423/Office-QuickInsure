@@ -1,5 +1,17 @@
 class Api::V1::BillsController < ApplicationController
 
+  def index
+    bills = Bill.includes(:patient)
+    render json: bills, include: :patient
+  end
+
+  def show
+    bill = Bill.find_by(id: params[:id])
+    return render json: { error: "Bill not found" }, status: 404 unless bill
+
+    render json: bill, include: :patient
+  end
+
   def create
     result = Bill.generate(params[:patient_id])
 

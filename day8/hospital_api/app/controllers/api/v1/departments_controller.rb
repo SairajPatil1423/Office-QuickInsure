@@ -40,6 +40,12 @@ class Api::V1::DepartmentsController < ApplicationController
     render json: { message: "Deleted" }
   end
 
+
+  def revenue
+    departments = Department.revenue_report
+    render json: departments
+  end
+  
   private
 
   def department_params

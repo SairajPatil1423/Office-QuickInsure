@@ -56,6 +56,17 @@ class Api::V1::DoctorsController < ApplicationController
     render json: result
   end
 
+
+  def performance
+    render json: Doctor.performance
+  end
+
+
+  def top
+    doctors = Doctor.top_5
+    render json: doctors
+  end
+  
   private
 
   def doctor_params

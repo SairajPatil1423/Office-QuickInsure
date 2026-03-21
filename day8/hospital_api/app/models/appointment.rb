@@ -56,6 +56,13 @@ class Appointment < ApplicationRecord
       end
   end
 
+  def self.top_3_peak_hours
+    group("DATE_PART('hour', apt_time)")
+      .order("COUNT(*) DESC")
+      .limit(3)
+      .select("DATE_PART('hour', apt_time) AS hour, COUNT(*) AS total_appointments")
+  end
+  
   def as_json(options = {})
     super(options).merge(
       "apt_time" => apt_time.strftime("%H:%M")

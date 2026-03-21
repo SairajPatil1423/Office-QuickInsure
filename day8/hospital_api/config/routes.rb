@@ -11,7 +11,32 @@ Rails.application.routes.draw do
           get :slots
         end
       end
+      
+      resources :doctors do
+        collection do
+          get :performance
+        end
+      end
 
+      resources :doctors do
+        collection do
+          get :top
+        end
+      end
+
+      resources :departments do
+        collection do
+          get :revenue
+        end
+      end
+
+
+      resources :appointments do
+        collection do
+          get :top_peak_hours
+        end
+      end
+      
       resources :appointments
 
       resources :wards
@@ -23,7 +48,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :bills, only: [:create]
+      resources :bills, only: [:create, :index, :show]
 
     end
   end

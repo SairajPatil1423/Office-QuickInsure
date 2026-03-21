@@ -15,7 +15,12 @@ class Bill < ApplicationRecord
 
     bed_charges = days * bed.price_per_day
 
-    doctor_fee = patient.appointments.last&.doctor&.consultation_fee || 0
+    appointments = patient.appointments
+                          .where(apt_date: admission.admission_date..admission.discharge_date)
+
+    doctor_fee = appointments.sum do |appt|
+      appt.doctor.consultation_fee
+    end
 
     total = bed_charges + doctor_fee
 
