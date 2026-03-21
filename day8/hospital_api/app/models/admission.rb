@@ -2,21 +2,19 @@ class Admission < ApplicationRecord
   belongs_to :patient
   belongs_to :bed
 
-  validates :admission_date, presence: true
-
   def self.admit_patient(patient_id, bed_id)
     patient = Patient.find_by(id: patient_id)
-    bed     = Bed.find_by(id: bed_id)
+    bed = Bed.find_by(id: bed_id)
 
     return { error: "Patient not found" } unless patient
     return { error: "Bed not found" } unless bed
 
     if exists?(patient_id: patient.id, discharge_date: nil)
-      return { error: "Patient already admitted" }
+      return { error: "Already admitted" }
     end
 
     if bed.status == "occupied"
-      return { error: "Bed already occupied" }
+      return { error: "Bed occupied" }
     end
 
     admission = create(
@@ -33,13 +31,12 @@ class Admission < ApplicationRecord
     end
   end
 
-  
   def discharge!
     return { error: "Already discharged" } if discharge_date.present?
 
     update(discharge_date: Date.today)
     bed.update(status: "available")
 
-    { success: "Patient discharged successfully" }
+    { success: "Discharged" }
   end
 end

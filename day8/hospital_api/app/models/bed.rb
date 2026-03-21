@@ -2,20 +2,20 @@ class Bed < ApplicationRecord
   belongs_to :ward
   has_many :admissions
 
-  validates :bed_number, presence: true
-  validates :status, inclusion: { in: %w[available occupied] }
-
-  validate :ward_capacity_not_exceeded, on: :create
-
   after_initialize do
     self.status ||= "available"
   end
 
-  private
-
-  def ward_capacity_not_exceeded
-    if ward && ward.full?
-      errors.add(:base, "Ward is full")
+  def price_per_day
+    case ward.ward_type
+    when "general"
+      2000
+    when "icu"
+      5000
+    when "emergency"
+      3000
+    else
+      2000
     end
   end
 end

@@ -1,32 +1,38 @@
 class Bill < ApplicationRecord
   belongs_to :patient
 
-  validates :total_amount, presence: true
-
-  def self.generate_bill(patient_id)
+  def self.generate(patient_id)
     patient = Patient.find_by(id: patient_id)
     return { error: "Patient not found" } unless patient
 
-    admission = patient.admissions.where(discharge_date: nil).last
-    return { error: "No active admission found" } unless admission
+    admission = patient.admissions.where.not(discharge_date: nil).last
+    return { error: "No completed admission" } unless admission
 
-    
-    days = (Date.today - admission.admission_date).to_i
-    days = 1 if days == 0
+    bed = admission.bed
 
-    
-    consultation_fee = 500
-    bed_charge_per_day = 2000
+    days = (admission.discharge_date - admission.admission_date).to_i
+    days = 1 if days <= 0
 
-    total = consultation_fee + (days * bed_charge_per_day)
+    bed_charges = days * bed.price_per_day
+
+    doctor_fee = patient.appointments.last&.doctor&.consultation_fee || 0
+
+    total = bed_charges + doctor_fee
 
     bill = create(
       patient_id: patient.id,
       total_amount: total,
-      payment_status: "pending",
-      payment_date: nil
+      payment_status: "pending"
     )
 
-    { bill: bill }
+    {
+      bill: bill,
+      breakdown: {
+        days: days,
+        bed_total: bed_charges,
+        doctor_fee: doctor_fee,
+        total: total
+      }
+    }
   end
 end
