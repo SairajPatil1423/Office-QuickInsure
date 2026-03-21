@@ -14,6 +14,9 @@ Rails.application.routes.draw do
 
       resources :appointments
 
+      resources :wards
+      resources :beds
+
       resources :admissions, only: [:create, :index] do
         member do
           patch :discharge
