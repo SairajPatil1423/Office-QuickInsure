@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_19_102546) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_21_045555) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -76,6 +76,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_19_102546) do
     t.uuid "department_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "consultation_fee", default: "500.0"
+    t.time "start_time"
+    t.time "end_time"
+    t.integer "slot_duration", default: 30
     t.index ["department_id"], name: "index_doctors_on_department_id"
   end
 

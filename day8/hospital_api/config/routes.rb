@@ -1,22 +1,28 @@
 Rails.application.routes.draw do
-  namespace :api do
 
+  namespace :api do
     namespace :v1 do
 
-      resources :departments
       resources :patients
-      resources :doctors
+      resources :departments
+
+      resources :doctors do
+        member do
+          get :slots
+        end
+      end
+
       resources :appointments
-      resources :admissions do
+
+      resources :admissions, only: [:create, :index] do
         member do
           patch :discharge
         end
       end
-      resources :bills, only: [:create]
-      resources :wards, only: [:index, :create]
-      resources :beds, only: [:index, :create]
-    end
 
+      resources :bills, only: [:create]
+
+    end
   end
 
 end
