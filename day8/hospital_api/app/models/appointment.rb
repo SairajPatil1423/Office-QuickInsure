@@ -3,34 +3,62 @@ class Appointment < ApplicationRecord
   belongs_to :doctor
 
   validates :apt_date, presence: true
-  validates :status, inclusion: { in: %w[scheduled completed cancelled] }
-  validates :duration, presence: true,
-                       numericality: { greater_than: 10, less_than_or_equal_to: 180 }
+  validates :duration, presence: true
 
-  validate :valid_time_slot
+  validate :slot_valid
 
   after_initialize do
     self.status ||= "scheduled"
   end
 
-  def valid_time_slot
-    return if apt_time.blank?
+  def slot_valid
+    return if doctor.nil? || apt_time.nil?
 
-    errors.add(:apt_time, "must be valid time") unless apt_time.present?
+    if doctor.status == "inactive"
+      errors.add(:base, "Doctor not available")
+      return
+    end
+
+    if apt_time < doctor.start_time || apt_time >= doctor.end_time
+      errors.add(:base, "Outside working hours")
+      return
+    end
+
+    unless valid_slot_time?
+      errors.add(:base, "Invalid slot")
+      return
+    end
+
+    if self.class.slot_conflict?(self)
+      errors.add(:base, "Slot already booked")
+    end
   end
 
-  
+  def valid_slot_time?
+    slot = doctor.start_time
+    while slot < doctor.end_time
+      return true if slot.strftime("%H:%M") == apt_time.strftime("%H:%M")
+      slot += doctor.slot_duration.minutes
+    end
+    false
+  end
+
   def self.slot_conflict?(appointment)
     start_time = appointment.apt_time
-    end_time   = start_time + appointment.duration.minutes
+    end_time = start_time + appointment.duration.minutes
 
     where(apt_date: appointment.apt_date)
       .where("doctor_id = ? OR patient_id = ?", appointment.doctor_id, appointment.patient_id)
       .any? do |appt|
         existing_start = appt.apt_time
-        existing_end   = existing_start + appt.duration.minutes
-
+        existing_end = existing_start + appt.duration.minutes
         (start_time < existing_end) && (end_time > existing_start)
       end
+  end
+
+  def as_json(options = {})
+    super(options).merge(
+      "apt_time" => apt_time.strftime("%H:%M")
+    )
   end
 end
